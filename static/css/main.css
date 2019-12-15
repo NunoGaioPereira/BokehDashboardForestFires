@@ -1,0 +1,14 @@
+nav {
+	background-color: #111;
+	height: 40px;
+}
+
+nav a {
+	color: #fff;
+	text-decoration: none;
+}
+
+.header-info {
+	text-align: center;
+	margin-top: 30px;
+}

@@ -9,11 +9,12 @@
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-1.2.0.min.css" rel="stylesheet">
     <link href="http://cdn.pydata.org/bokeh/release/bokeh-widgets-1.2.0.min.css" rel="stylesheet">
     
-    <!--<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">-->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
     <title>Titanic - Dashboard</title>
 </head>
 <body>
-
+    {% include 'navbar.html' %}
+    
     {% block content %}
     {% endblock %}
 
