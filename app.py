@@ -3,13 +3,13 @@ import numpy as np
 import pandas as pd
 
 from bokeh.embed import components
-from bokeh.models import ColumnDataSource, HoverTool, PrintfTickFormatter
+from bokeh.models import ColumnDataSource, HoverTool, PrintfTickFormatter, ColorBar
 from bokeh.plotting import figure
 from bokeh.transform import factor_cmap
 
 from flask import Flask, render_template, request
 from bokeh.transform import linear_cmap, LogColorMapper
-from bokeh.palettes import YlOrRd
+from bokeh.palettes import Viridis256
 
 
 
@@ -18,8 +18,27 @@ df['Title'] = df['Name'].apply(lambda x: x.split(',')[1].strip().split(' ')[0])
 
 df2 = pd.read_csv('data/forestfires.csv')
 month_names = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+full_names = ['january','fe','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
 months = df2['month'].value_counts()
 months = months.reindex(month_names)
+#months = months.rename(full_names)
+#print(months.rename())
+
+avg_temp = df2.groupby('month').mean()
+avg_temp = avg_temp.reindex(month_names)
+avg_temp = avg_temp['temp']
+
+max_temp = df2.groupby('month').max()
+max_temp = max_temp.reindex(month_names)
+max_temp = max_temp['temp']
+
+min_temp = df2.groupby('month').min()
+min_temp = min_temp.reindex(month_names)
+min_temp = min_temp['temp']
+
+print(avg_temp)
+print(min_temp)
+print(max_temp)
 
 palette = ['#ba32a0', '#f85479', '#f8c260', '#00c2ba']
 
@@ -145,16 +164,50 @@ def age_hist(dataset, pass_class, color=palette[1]):
 
 def fires_bar_chart():
     source = ColumnDataSource(dict(y=month_names, right=months))
-    mapper = linear_cmap(field_name='right', palette='Viridis256' ,low=max(source.data['right']) ,high=min(source.data['right']))
+    pale = Viridis256
+    pale = pale[::-1]
+    mapper = linear_cmap(field_name='right', palette=pale ,low=min(source.data['right']) ,high=max(source.data['right']))
     p = figure(x_range=month_names, plot_width=700, plot_height=500, title = 'Number of fires per month', y_axis_label = 'Number of fires', tools="pan, box_select, zoom_in, zoom_out, save, reset")
     
-    p.vbar(x='y', top='right', bottom=0, width=0.4, fill_color=mapper, line_width=0, source=source, legend='y')
+    p.vbar(x='y', top='right', bottom=0, width=0.4, fill_color=mapper, line_width=0, source=source)
     
+    color_bar = ColorBar(color_mapper=mapper['transform'], width=8,  location=(0,0))
+    p.add_layout(color_bar, 'right')
+
+    hover = HoverTool()
+    hover.tooltips = """
+        <div>   
+            <h3>@y</h3>
+            <div><strong>Number of Fires: </strong>@right</div>
+        </div>
+    """
+    p.add_tools(hover)
+
     plot_styler(p)
     p.sizing_mode = 'scale_width'
 
     return p
 
+def temperatures_line_chart():
+    source = ColumnDataSource(dict(y=month_names, right=months))
+
+    #p = figure(x_range=month_names, plot_width=700, plot_height=500, title = 'Number of fires per month', y_axis_label = 'Number of fires', tools="pan, box_select, zoom_in, zoom_out, save, reset")
+    
+    # p.vbar(x='y', top='right', bottom=0, width=0.4, fill_color=mapper, line_width=0, source=source)
+
+   # avg_temp = df2.groupby('month').mean()
+    #avg_temp = avg_temp.reindex(month_names)
+    #avg_temp = avg_temp['temp']
+
+    p = figure(plot_width=400, plot_height=400, title="Max, min and Average Temperature")
+    #p.multi_line([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]], [avg_temp, max_temp, min_temp], color=["#2c3e50", "#e74c3c", "#3498db"], line_width=2)
+    p.line([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], avg_temp,  color="#2c3e50", line_width=2, legend="Average temperature")
+    p.line([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], max_temp,  color="#e74c3c", line_width=2, legend="Maximum temperature")
+    p.line([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], min_temp,  color="#3498db", line_width=2, legend="Minimum temperature")
+    plot_styler(p)
+    p.sizing_mode = 'scale_width'
+
+    return p    
 
 
 def redraw(p_class):
@@ -170,8 +223,8 @@ def redraw(p_class):
 
 def redraw2():
     fires_chart = fires_bar_chart()
-
-    return (fires_chart)
+    temperatures_chart = temperatures_line_chart()
+    return (fires_chart, temperatures_chart)
 
 
 
@@ -180,35 +233,32 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def chart():
-    selected_class = request.form.get('dropdown-select')
+    '''selected_class = request.form.get('dropdown-select')
 
     if selected_class == 0 or selected_class == None:
         survived_chart, title_chart, hist_age = redraw(1)
     else:
-        survived_chart, title_chart, hist_age = redraw(selected_class)
+        survived_chart, title_chart, hist_age = redraw(selected_class)'''
     
-    fires_chart = redraw2()
-
-    script_survived_chart, div_survived_chart = components(survived_chart)
-    script_title_chart, div_title_chart = components(title_chart)
-    script_hist_age, div_hist_age = components(hist_age)
+    fires_chart, temperatures_chart = redraw2()
+    #script_survived_chart, div_survived_chart = components(survived_chart)
+    #script_title_chart, div_title_chart = components(title_chart)
+    #script_hist_age, div_hist_age = components(hist_age)
     script_fires_chart, div_fires_chart = components(fires_chart)
+    script_temperatures_chart, div_temperatures_chart = components(temperatures_chart)
 
 
 
     return render_template(
         'index.html',
-        div_survived_chart=div_survived_chart,
-        script_survived_chart=script_survived_chart,
-        div_title_chart=div_title_chart,
-        script_title_chart=script_title_chart,
-        div_hist_age=div_hist_age,
-        script_hist_age=script_hist_age,
-        selected_class=selected_class,
         div_fires_chart=div_fires_chart,
-        script_fires_chart=script_fires_chart
+        script_fires_chart=script_fires_chart,
+        div_temperatures_chart=div_temperatures_chart,
+        script_temperatures_chart=script_temperatures_chart
     )
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+    #request.args.get("name")
+    #request.form.get("name")

@@ -15,11 +15,28 @@
                 {{ div_survived_chart | safe }}
             </div>
         </div>-->
-        <div class="row mt-5">
-            {{ div_fires_chart | safe }}
+        <div class="plot">
+            <h3>Fires per month of the year</h3>
+            <div class="grid">
+                <div class="text-row">
+                    <div class="text">
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Corporis provident ducimus incidunt dicta aliquam nesciunt quod laudantium tempore iusto ab veritatis, aperiam iste aspernatur quisquam consequuntur, accusamus ipsam magni perferendis ullam recusandae inventore? Cupiditate fugit recusandae reiciendis libero placeat esse saepe suscipit, sit eveniet ratione natus totam similique distinctio quas repudiandae ipsa excepturi sunt est nam molestias quibusdam dicta ab.</p>
+                    </div>
+                </div>
+                <div class="graph-row">
+                    {{ div_fires_chart | safe }}
+                </div>    
+            </div>    
         </div>
+
+        <div style="max-width: 500px">
+            {{ div_temperatures_chart | safe }}
+        </div>   
+        
+        
     </div>
 
     <!--{{ script_survived_chart | safe }}-->
     {{ script_fires_chart | safe }}
+    {{ script_temperatures_chart | safe }}
 {% endblock %}
